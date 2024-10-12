@@ -1,0 +1,4 @@
+{
+  "baseurl": "https://localhost:8080",
+  "token": "<REST API TOKEN>"
+}
