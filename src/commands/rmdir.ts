@@ -41,7 +41,7 @@ export default class Rmdir extends Command {
     }
     const config = new Config(flags)
     for (let i = 0; i < argv.length; i++) {
-      let result = await this.remove_directory(config, cwd, argv[i] as string, flags.parent, flags.verbose)
+      await this.remove_directory(config, cwd, argv[i] as string, flags.parent, flags.verbose)
     }
   }
 

@@ -64,21 +64,21 @@ export namespace KeClient {
   export async function create(config: Config, path: string, name: string, data: any): Promise<ObjectResponse | null> {
     let rest: rm.RestClient = new rm.RestClient('ke-client', config.baseurl)
     let resp: rm.IRestResponse<ObjectResponse> = await rest.create<ObjectResponse>(path, data, request_options(config.token))
-    if (resp.statusCode == 400) {
-
-    } else if (resp.statusCode != 201) {
+    if (resp.statusCode != 201) {
       throw new Error(`StatusCode: ${resp.statusCode}`)
     }
     return resp.result
   }
 
-  export async function del(config: Config, path: string): Promise<ObjectResponse | null> {
+  export async function del(config: Config, path: string, force: boolean = false): Promise<boolean> {
     let rest: rm.RestClient = new rm.RestClient('ke-client', config.baseurl)
     let resp: rm.IRestResponse<ObjectResponse> = await rest.del<ObjectResponse>(path, request_options(config.token))
-    if (resp.statusCode != 204) {
+    if (force && resp.statusCode == 404) {
+      return false
+    } else if (resp.statusCode != 204) {
       throw new Error(`StatusCode: ${resp.statusCode}`)
     }
-    return resp.result
+    return true
   }
 }
 
