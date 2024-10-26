@@ -1,11 +1,17 @@
 import {Args, Command, Flags} from '@oclif/core'
-import path from 'path'
+import path from 'node:path'
 
-import {common as common_flags} from '../flags.js'
+import * as KeClient from '../client.js'
+import {checkCwd, checkInsecure} from '../common.js'
 import Config from '../config.js'
-import KeClient from '../client.js'
-import {check_cwd, check_insecure} from '../common.js'
 import {DIRECTORY_TYPE} from '../const.js'
+import {common as commonFlags} from '../flags.js'
+
+
+type MkdirOptions = {
+  parent?: boolean
+  verbose?: boolean
+}
 
 
 export default class Mkdir extends Command {
@@ -15,7 +21,6 @@ export default class Mkdir extends Command {
       required: true,
     }),
   }
-  static strict = false
 
   static override description = 'Create the directories, if they do not already exist.'
 
@@ -24,44 +29,53 @@ export default class Mkdir extends Command {
   ]
 
   static override flags = {
-    ...common_flags,
+    ...commonFlags,
     // flag with a value (-c, --cwd=VALUE)
     cwd: Flags.string({char: 'c', description: 'set current working directory to VALUE'}),
     parent: Flags.boolean({char: 'p', description: 'no error if existing, make parent directories as needed'}),
     verbose: Flags.boolean({char: 'v', description: 'print a message for each created directory'}),
   }
 
+  static strict = false
+
   public async run(): Promise<void> {
     const {argv, flags} = await this.parse(Mkdir)
     const config = new Config(flags)
-    check_insecure(flags.insecure)
-    let cwd = await check_cwd(config, flags.cwd)
-    for (let i = 0; i < argv.length; i++) {
-      const {dir, base} = path.parse(path.resolve(cwd, argv[i] as string))
-      await this.make_directory(config, dir, base, flags.parent, flags.verbose)
-    }
+    checkInsecure(flags.insecure)
+    const cwd = await checkCwd(config, flags.cwd)
+    await Promise.all(
+      argv.map((arg) => {
+	const {base, dir} = path.parse(path.resolve(cwd, arg as string))
+	return this.makeDir(config, dir, base, flags)
+      })
+    )
   }
-  private async make_directory(config: Config, parent_dir: string, name: string, parent: boolean = false, verbose: boolean = false) {
-    // parent_dir の存在チェック
-    let result = await KeClient.get(config, parent_dir)
-    if (result == null) {
-      if (!parent) {
-        throw new Error(`cannot create directory: parent directory '${parent_dir}' is not found`)
+
+  private async makeDir(config: Config, parentDir: string, name: string, options: MkdirOptions) {
+    // parentDir の存在チェック
+    let result = await KeClient.get(config, parentDir)
+    if (result === null) {
+      if (!options.parent) {
+        throw new Error(`cannot create directory: parent directory '${parentDir}' is not found`)
       }
-      const {dir, base} = path.parse(parent_dir)
-      result = await this.make_directory(config, dir, base, parent, verbose)
+
+      const {base, dir} = path.parse(parentDir)
+      result = await this.makeDir(config, dir, base, options)
     }
-    if (result!.type_object != DIRECTORY_TYPE) {
-      throw new Error(`cannot create directory: parent directory '${parent_dir}' is not directory`)
+
+    if (result!.type_object !== DIRECTORY_TYPE) {
+      throw new Error(`cannot create directory: parent directory '${parentDir}' is not directory`)
     }
-    let data = {
+
+    const data = {
+      name,
       'type_object': DIRECTORY_TYPE,
-      'name': name
     }
-    result = await KeClient.create(config, parent_dir, data)
-    if (result && verbose) {
+    result = await KeClient.create(config, parentDir, data)
+    if (result && options.verbose) {
       this.log(`created directory: ${result.abspath}`)
     }
+
     return result
   }
 }

@@ -1,11 +1,17 @@
 import {Args, Command, Flags} from '@oclif/core'
-import path from 'path'
+import path from 'node:path'
 
-import {common as common_flags} from '../flags.js'
+import * as KeClient from '../client.js'
+import {checkCwd, checkInsecure} from '../common.js'
 import Config from '../config.js'
-import KeClient from '../client.js'
-import {check_cwd, check_insecure} from '../common.js'
 import {DIRECTORY_TYPE} from '../const.js'
+import {common as commonFlags} from '../flags.js'
+
+
+type RmdirOptions = {
+  parent?: boolean
+  verbose?: boolean
+}
 
 
 export default class Rmdir extends Command {
@@ -15,7 +21,6 @@ export default class Rmdir extends Command {
       required: true,
     }),
   }
-  static strict = false
 
   static override description = 'Remove the directories, if they are empty.'
 
@@ -24,47 +29,56 @@ export default class Rmdir extends Command {
   ]
 
   static override flags = {
-    ...common_flags,
+    ...commonFlags,
     // flag with a value (-c, --cwd=VALUE)
     cwd: Flags.string({char: 'c', description: 'set current working directory to VALUE'}),
     parent: Flags.boolean({char: 'p', description: 'remove DIRECTORY and its ancestors'}),
     verbose: Flags.boolean({char: 'v', description: 'print a message for each removed directory'}),
   }
 
+  static strict = false
+
   public async run(): Promise<void> {
     const {argv, flags} = await this.parse(Rmdir)
     const config = new Config(flags)
-    check_insecure(flags.insecure)
-    let cwd = await check_cwd(config, flags.cwd)
-    for (let i = 0; i < argv.length; i++) {
-      await this.remove_directory(config, cwd, argv[i] as string, flags.parent, flags.verbose)
-    }
+    checkInsecure(flags.insecure)
+    const cwd = await checkCwd(config, flags.cwd)
+
+    await Promise.all(
+      argv.map((arg) => this.removeDirectory(config, cwd, arg as string, flags))
+    )
   }
 
-  private async remove_directory(config: Config, cwd: string, target: string, parent: boolean = false, verbose: boolean = false) {
-    const target_dir = path.resolve(cwd, target)
-    let result = await KeClient.get(config, target_dir)
-    if (result == null) {
-      throw new Error(`failed to remove directory: '${target_dir}' is not found`)
+  private async removeDirectory(config: Config, cwd: string, target: string, options: RmdirOptions) {
+    const targetDir = path.resolve(cwd, target)
+    const result = await KeClient.get(config, targetDir)
+
+    if (result === null) {
+      throw new Error(`failed to remove directory: '${targetDir}' is not found`)
     }
-    if (result.type_object != DIRECTORY_TYPE) {
-      throw new Error(`failed to remove directory: '${target_dir}' is not a directory`)      
+
+    if (result.type_object !== DIRECTORY_TYPE) {
+      throw new Error(`failed to remove directory: '${targetDir}' is not a directory`)      
     }
+
     // ディレクトリが空かどうかチェックする
-    let results = await KeClient.get_all(config, `${target_dir}.children`)
+    const results = await KeClient.getAll(config, `${targetDir}.children`)
     if (results!.count > 0) {
-      throw new Error(`failed to remove directory: '${target_dir}' is not empty`)      
+      throw new Error(`failed to remove directory: '${targetDir}' is not empty`)      
     }
-    await KeClient.del(config, target_dir)
-    if (verbose) {
-      this.log(`removed directory: ${target_dir}`)
+
+    await KeClient.del(config, targetDir)
+    if (options.verbose) {
+      this.log(`removed directory: ${targetDir}`)
     }
-    if (parent) {
-      const {dir, base} = path.parse(target_dir)
-      if (dir != cwd) {
-	await this.remove_directory(config, cwd, dir, parent, verbose)
+
+    if (options.parent) {
+      const {dir} = path.parse(targetDir)
+      if (dir !== cwd) {
+	await this.removeDirectory(config, cwd, dir, options)
       }
     }
+
     return result
   }
 }

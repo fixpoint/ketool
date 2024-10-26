@@ -1,11 +1,18 @@
 import {Args, Command, Flags} from '@oclif/core'
-import path from 'path'
+import path from 'node:path'
 
-import {common as common_flags} from '../flags.js'
+import * as KeClient from '../client.js'
+import {checkCwd, checkInsecure} from '../common.js'
 import Config from '../config.js'
-import KeClient from '../client.js'
-import {check_cwd, check_insecure} from '../common.js'
 import {DIRECTORY_TYPE} from '../const.js'
+import {common as commonFlags} from '../flags.js'
+
+
+type RmOptions = {
+  force?: boolean
+  recursive?: boolean
+  verbose?: boolean
+}
 
 
 export default class Rm extends Command {
@@ -15,7 +22,6 @@ export default class Rm extends Command {
       required: true,
     }),
   }
-  static strict = false
 
   static override description = 'Remove the directories, if they are empty.'
 
@@ -24,7 +30,7 @@ export default class Rm extends Command {
   ]
 
   static override flags = {
-    ...common_flags,
+    ...commonFlags,
     // flag with a value (-c, --cwd=VALUE)
     cwd: Flags.string({char: 'c', description: 'set current working directory to VALUE'}),
     force: Flags.boolean({char: 'f', description: 'ignore nonexistent objects and arguments'}),
@@ -32,29 +38,32 @@ export default class Rm extends Command {
     verbose: Flags.boolean({char: 'v', description: 'print a message for each removed directory'}),
   }
 
+  static strict = false
+
   public async run(): Promise<void> {
     const {argv, flags} = await this.parse(Rm)
     const config = new Config(flags)
-    check_insecure(flags.insecure)
-    let cwd = await check_cwd(config, flags.cwd)
-    for (let i = 0; i < argv.length; i++) {
-      const target = path.resolve(cwd, argv[i] as string)
-      await this.remove_object(config, target, flags.force, flags.recursive, flags.verbose)
-    }
+    checkInsecure(flags.insecure)
+    const cwd = await checkCwd(config, flags.cwd)
+    await Promise.all(
+      argv.map((arg) => this.removeObject(config, path.resolve(cwd, arg as string), flags))
+    )
   }
 
-  private async remove_object(config: Config, target: string, force: boolean = false, recursive: boolean = false, verbose: boolean = false) {
-    if (!force) {
-      let result = await KeClient.get(config, target)
-      if (result == null) {
+  private async removeObject(config: Config, target: string, options: RmOptions) {
+    if (!options.force) {
+      const result = await KeClient.get(config, target)
+      if (result === null) {
 	throw new Error(`failed to remove: '${target}' is not found`)
       }
-      if (result.type_object == DIRECTORY_TYPE) {
+
+      if (result.type_object === DIRECTORY_TYPE) {
 	throw new Error(`failed to remove: '${target}' is a directory`)
       }
     }
-    let removed = await KeClient.del(config, target, force)
-    if (verbose && removed) {
+
+    const removed = await KeClient.del(config, target, options.force)
+    if (options.verbose && removed) {
       this.log(`removed: ${target}`)
     }
   }
