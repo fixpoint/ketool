@@ -56,11 +56,13 @@ export default class Rm extends Command {
     if (!options.force) {
       const result = await KeClient.get(this.conf, target)
       if (result === null) {
-	throw new Error(`failed to remove: '${target}' is not found`)
+	this.warn(`failed to remove: '${target}' is not found`)
+	return
       }
 
       if (result.type_object === DIRECTORY_TYPE) {
-	throw new Error(`failed to remove: '${target}' is a directory`)
+	this.warn(`failed to remove: '${target}' is a directory`)
+	return
       }
     }
 

@@ -56,17 +56,20 @@ export default class Rmdir extends Command {
     const result = await KeClient.get(this.conf, targetDir)
 
     if (result === null) {
-      throw new Error(`failed to remove directory: '${targetDir}' is not found`)
+      this.warn(`failed to remove directory: '${targetDir}' is not found`)
+      return
     }
 
     if (result.type_object !== DIRECTORY_TYPE) {
-      throw new Error(`failed to remove directory: '${targetDir}' is not a directory`)      
+      this.warn(`failed to remove directory: '${targetDir}' is not a directory`)
+      return
     }
 
     // ディレクトリが空かどうかチェックする
     const results = await KeClient.getAll(this.conf, `${targetDir}.children`)
     if (results!.count > 0) {
-      throw new Error(`failed to remove directory: '${targetDir}' is not empty`)      
+      this.warn(`failed to remove directory: '${targetDir}' is not empty`)
+      return
     }
 
     await KeClient.del(this.conf, targetDir)
