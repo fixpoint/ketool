@@ -1,8 +1,10 @@
 import {Args, Command, Flags} from '@oclif/core'
-import {common as common_flags} from '../flags.js'
 import path from 'path'
+
+import {common as common_flags} from '../flags.js'
 import Config from '../config.js'
 import KeClient from '../client.js'
+import {check_cwd, check_insecure} from '../common.js'
 import {DIRECTORY_TYPE} from '../const.js'
 
 
@@ -31,15 +33,9 @@ export default class Rmdir extends Command {
 
   public async run(): Promise<void> {
     const {argv, flags} = await this.parse(Rmdir)
-    let cwd = '/'
-    if (flags.cwd) {
-      // cwd のパラメータチェック
-      if (!path.isAbsolute(flags.cwd)) {
-     	throw new Error(`cwd should be absolute path: ${flags.cwd}`)
-      }
-      cwd = path.normalize(flags.cwd)
-    }
     const config = new Config(flags)
+    check_insecure(flags.insecure)
+    let cwd = await check_cwd(config, flags.cwd)
     for (let i = 0; i < argv.length; i++) {
       await this.remove_directory(config, cwd, argv[i] as string, flags.parent, flags.verbose)
     }

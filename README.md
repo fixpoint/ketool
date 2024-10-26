@@ -31,6 +31,7 @@ USAGE
 <!-- commands -->
 * [`ketool help [COMMAND]`](#ketool-help-command)
 * [`ketool mkdir DIRECTORY`](#ketool-mkdir-directory)
+* [`ketool put SOURCE`](#ketool-put-source)
 * [`ketool rm OBJECT`](#ketool-rm-object)
 * [`ketool rmdir DIRECTORY`](#ketool-rmdir-directory)
 
@@ -60,13 +61,14 @@ Create the directories, if they do not already exist.
 
 ```
 USAGE
-  $ ketool mkdir DIRECTORY... [-u <value>] [-t <value>] [-c <value>] [-p] [-v]
+  $ ketool mkdir DIRECTORY... [-u <value>] [-t <value>] [-k] [-c <value>] [-p] [-v]
 
 ARGUMENTS
   DIRECTORY...  path of the directory to be created
 
 FLAGS
   -c, --cwd=<value>      set current working directory to VALUE
+  -k, --insecure         allow insecure SSL connection
   -p, --parent           no error if existing, make parent directories as needed
   -t, --token=<value>    API access token of the Kompira Enterprise server
   -u, --baseurl=<value>  base URL of the Kompira Enterprise server
@@ -81,13 +83,43 @@ EXAMPLES
 
 _See code: [src/commands/mkdir.ts](https://github.com/fixpoint/ketool/blob/v0.0.0/src/commands/mkdir.ts)_
 
+## `ketool put SOURCE`
+
+put files or directories to Kompira server
+
+```
+USAGE
+  $ ketool put SOURCE... [-u <value>] [-t <value>] [-k] [-d <value>] [-c <value>] [-r] [-o] [-v]
+
+ARGUMENTS
+  SOURCE...  source file or directory
+
+FLAGS
+  -c, --cwd=<value>      set current working directory to VALUE
+  -d, --dest=<value>     specify destination object or directory (create if none exists)
+  -k, --insecure         allow insecure SSL connection
+  -o, --overwrite        overwrite an existing object
+  -r, --recursive        put directories recursively
+  -t, --token=<value>    API access token of the Kompira Enterprise server
+  -u, --baseurl=<value>  base URL of the Kompira Enterprise server
+  -v, --verbose          explain what is being down
+
+DESCRIPTION
+  put files or directories to Kompira server
+
+EXAMPLES
+  $ ketool put
+```
+
+_See code: [src/commands/put.ts](https://github.com/fixpoint/ketool/blob/v0.0.0/src/commands/put.ts)_
+
 ## `ketool rm OBJECT`
 
 Remove the directories, if they are empty.
 
 ```
 USAGE
-  $ ketool rm OBJECT... [-u <value>] [-t <value>] [-c <value>] [-f] [-r] [-v]
+  $ ketool rm OBJECT... [-u <value>] [-t <value>] [-k] [-c <value>] [-f] [-r] [-v]
 
 ARGUMENTS
   OBJECT...  path of the object to be removed
@@ -95,6 +127,7 @@ ARGUMENTS
 FLAGS
   -c, --cwd=<value>      set current working directory to VALUE
   -f, --force            ignore nonexistent objects and arguments
+  -k, --insecure         allow insecure SSL connection
   -r, --recurcive        remove directories and their contents recursively
   -t, --token=<value>    API access token of the Kompira Enterprise server
   -u, --baseurl=<value>  base URL of the Kompira Enterprise server
@@ -115,13 +148,14 @@ Remove the directories, if they are empty.
 
 ```
 USAGE
-  $ ketool rmdir DIRECTORY... [-u <value>] [-t <value>] [-c <value>] [-p] [-v]
+  $ ketool rmdir DIRECTORY... [-u <value>] [-t <value>] [-k] [-c <value>] [-p] [-v]
 
 ARGUMENTS
   DIRECTORY...  path of the directory to be removed
 
 FLAGS
   -c, --cwd=<value>      set current working directory to VALUE
+  -k, --insecure         allow insecure SSL connection
   -p, --parent           remove DIRECTORY and its ancestors
   -t, --token=<value>    API access token of the Kompira Enterprise server
   -u, --baseurl=<value>  base URL of the Kompira Enterprise server

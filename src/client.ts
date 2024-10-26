@@ -61,13 +61,31 @@ export namespace KeClient {
     return resp.result
   }
 
-  export async function create(config: Config, path: string, name: string, data: any): Promise<ObjectResponse | null> {
+  export async function create(config: Config, path: string, data: any): Promise<ObjectResponse> {
     let rest: rm.RestClient = new rm.RestClient('ke-client', config.baseurl)
     let resp: rm.IRestResponse<ObjectResponse> = await rest.create<ObjectResponse>(path, data, request_options(config.token))
     if (resp.statusCode != 201) {
       throw new Error(`StatusCode: ${resp.statusCode}`)
     }
-    return resp.result
+    return resp.result as ObjectResponse
+  }
+
+  export async function update(config: Config, path: string, data: any): Promise<ObjectResponse> {
+    let rest: rm.RestClient = new rm.RestClient('ke-client', config.baseurl)
+    let resp: rm.IRestResponse<ObjectResponse> = await rest.update<ObjectResponse>(path, data, request_options(config.token))
+    if (resp.statusCode != 200) {
+      throw new Error(`StatusCode: ${resp.statusCode}`)
+    }
+    return resp.result as ObjectResponse
+  }
+
+  export async function replace(config: Config, path: string, data: any): Promise<ObjectResponse> {
+    let rest: rm.RestClient = new rm.RestClient('ke-client', config.baseurl)
+    let resp: rm.IRestResponse<ObjectResponse> = await rest.replace<ObjectResponse>(path, data, request_options(config.token))
+    if (resp.statusCode != 200) {
+      throw new Error(`StatusCode: ${resp.statusCode}`)
+    }
+    return resp.result as ObjectResponse
   }
 
   export async function del(config: Config, path: string, force: boolean = false): Promise<boolean> {

@@ -1,8 +1,10 @@
 import {Args, Command, Flags} from '@oclif/core'
-import {common as common_flags} from '../flags.js'
 import path from 'path'
+
+import {common as common_flags} from '../flags.js'
 import Config from '../config.js'
 import KeClient from '../client.js'
+import {check_cwd, check_insecure} from '../common.js'
 import {DIRECTORY_TYPE} from '../const.js'
 
 
@@ -31,21 +33,14 @@ export default class Mkdir extends Command {
 
   public async run(): Promise<void> {
     const {argv, flags} = await this.parse(Mkdir)
-    let cwd = '/'
-    if (flags.cwd) {
-      // cwd のパラメータチェック
-      if (!path.isAbsolute(flags.cwd)) {
-        throw new Error(`cwd should be absolute path: ${flags.cwd}`)
-      }
-      cwd = flags.cwd
-    }
     const config = new Config(flags)
+    check_insecure(flags.insecure)
+    let cwd = await check_cwd(config, flags.cwd)
     for (let i = 0; i < argv.length; i++) {
       const {dir, base} = path.parse(path.resolve(cwd, argv[i] as string))
       await this.make_directory(config, dir, base, flags.parent, flags.verbose)
     }
   }
-
   private async make_directory(config: Config, parent_dir: string, name: string, parent: boolean = false, verbose: boolean = false) {
     // parent_dir の存在チェック
     let result = await KeClient.get(config, parent_dir)
@@ -63,7 +58,7 @@ export default class Mkdir extends Command {
       'type_object': DIRECTORY_TYPE,
       'name': name
     }
-    result = await KeClient.create(config, parent_dir, name, data)
+    result = await KeClient.create(config, parent_dir, data)
     if (result && verbose) {
       this.log(`created directory: ${result.abspath}`)
     }
