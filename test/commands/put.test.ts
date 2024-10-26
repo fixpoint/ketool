@@ -2,13 +2,21 @@ import {runCommand} from '@oclif/test'
 import {expect} from 'chai'
 
 describe('put', () => {
-  it('runs put cmd', async () => {
-    const {stdout} = await runCommand('put')
-    expect(stdout).to.contain('hello world')
+  before(async () => {
+    await runCommand('rm testdir --cwd /root -rfk')
+    await runCommand('mkdir testdir --cwd /root -k')
+  })
+  after(async () => {
+    await runCommand('rm testdir --cwd /root -rfk')
   })
 
-  it('runs put --name oclif', async () => {
-    const {stdout} = await runCommand('put --name oclif')
-    expect(stdout).to.contain('hello oclif')
+  it('runs put', async () => {
+    const {error} = await runCommand('put')
+    expect(error?.oclif?.exit).to.equal(2)
+  })
+
+  it('runs put --help', async () => {
+    const {stdout} = await runCommand('put --help')
+    expect(stdout).to.contain('USAGE')
   })
 })

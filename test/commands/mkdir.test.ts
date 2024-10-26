@@ -2,13 +2,26 @@ import {runCommand} from '@oclif/test'
 import {expect} from 'chai'
 
 describe('mkdir', () => {
-  it('runs mkdir cmd', async () => {
-    const {stdout} = await runCommand('mkdir')
-    expect(stdout).to.contain('hello world')
+  before(async () => {
+    await runCommand('rm testdir --cwd /root -rfk')
+    await runCommand('mkdir testdir --cwd /root -k')
+  })
+  after(async () => {
+    await runCommand('rm testdir --cwd /root -rfk')
   })
 
-  it('runs mkdir --name oclif', async () => {
-    const {stdout} = await runCommand('mkdir --name oclif')
-    expect(stdout).to.contain('hello oclif')
+  it('runs mkdir', async () => {
+    const {error} = await runCommand('mkdir')
+    expect(error?.oclif?.exit).to.equal(2)
+  })
+
+  it('runs mkdir --help', async () => {
+    const {stdout} = await runCommand('mkdir --help')
+    expect(stdout).to.contain('USAGE')
+  })
+
+  it('runs mkdir somedir --cwd /root/testdir -kv', async() => {
+    const {stdout} = await runCommand('mkdir somedir --cwd /root/testdir -kv')
+    expect(stdout).to.contain('created directory: /root/testdir/somedir')
   })
 })
