@@ -57,6 +57,11 @@ export default class Put extends Command {
     const cwd = await checkCwd(this.conf, flags.cwd)
     let dest = path.normalize(path.join(cwd, flags.dest || ''))
     const sources = await this.checkSources(argv as string[], path.resolve('.'))
+
+    if (sources.length === 0) {
+      return
+    }
+
     let target: KeClient.ObjectResponse | null | string = await KeClient.get(this.conf, dest) 
   
     if (argv.length === 1) {
@@ -81,7 +86,10 @@ export default class Put extends Command {
 
       // dest 配下にsources をコピー
       await Promise.all(
-	sources.map((src) => this.putObject(dest, src, src.name, flags))
+	sources.map(async (src) => {
+	  const target = await KeClient.get(this.conf, path.join(dest, src.name)) || src.name
+	  await this.putObject(dest, src, target, flags)
+	})
       )
     }
   }
@@ -116,6 +124,7 @@ export default class Put extends Command {
 
   private async putObject(dest: string, source: SourceDesc, target: KeClient.ObjectResponse | string, options: PutOptions) {
     let destDir = null
+
     if (target instanceof Object) {
       if (target.type_object === DIRECTORY_TYPE && source.type === 'dir') {
 	destDir = target.abspath
@@ -175,7 +184,7 @@ export default class Put extends Command {
 
       await Promise.all(
 	sources.map(async (src) => {
-	  target = await KeClient.get(this.conf, path.join(destDir, src.name)) || src.name
+	  const target = await KeClient.get(this.conf, path.join(destDir, src.name)) || src.name
 	  await this.putObject(destDir, src, target, options)
 	})
       )
