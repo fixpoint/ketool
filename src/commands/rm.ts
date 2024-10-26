@@ -40,19 +40,21 @@ export default class Rm extends Command {
 
   static strict = false
 
+  private conf!: Config
+
   public async run(): Promise<void> {
     const {argv, flags} = await this.parse(Rm)
-    const config = new Config(flags)
+    this.conf = new Config(flags)
     checkInsecure(flags.insecure)
-    const cwd = await checkCwd(config, flags.cwd)
+    const cwd = await checkCwd(this.conf, flags.cwd)
     await Promise.all(
-      argv.map((arg) => this.removeObject(config, path.resolve(cwd, arg as string), flags))
+      argv.map((arg) => this.removeObject(path.resolve(cwd, arg as string), flags))
     )
   }
 
-  private async removeObject(config: Config, target: string, options: RmOptions) {
+  private async removeObject(target: string, options: RmOptions) {
     if (!options.force) {
-      const result = await KeClient.get(config, target)
+      const result = await KeClient.get(this.conf, target)
       if (result === null) {
 	throw new Error(`failed to remove: '${target}' is not found`)
       }
@@ -62,7 +64,7 @@ export default class Rm extends Command {
       }
     }
 
-    const removed = await KeClient.del(config, target, options.force)
+    const removed = await KeClient.del(this.conf, target, options.force)
     if (options.verbose && removed) {
       this.log(`removed: ${target}`)
     }

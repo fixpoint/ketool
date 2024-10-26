@@ -48,27 +48,28 @@ export default class Put extends Command {
 
   static strict = false
 
+  private conf!: Config
+
   public async run(): Promise<void> {
     const {argv, flags} = await this.parse(Put)
-    const config = new Config(flags)
-  
+    this.conf = new Config(flags)
     checkInsecure(flags.insecure)
-    const cwd = await checkCwd(config, flags.cwd)
+    const cwd = await checkCwd(this.conf, flags.cwd)
     let dest = path.normalize(path.join(cwd, flags.dest || ''))
     const sources = await this.checkSources(argv as string[], path.resolve('.'))
-    let target: KeClient.ObjectResponse | null | string = await KeClient.get(config, dest) 
+    let target: KeClient.ObjectResponse | null | string = await KeClient.get(this.conf, dest) 
   
     if (argv.length === 1) {
       const source = sources[0]
       if (!target) {
 	({base: target, dir: dest} = path.parse(dest))
       } else if (target.type_object === DIRECTORY_TYPE) {
-	target = await KeClient.get(config, path.join(target.abspath, source.name)) || source.name
+	target = await KeClient.get(this.conf, path.join(target.abspath, source.name)) || source.name
       } else {
 	dest = path.dirname(dest)
       }
 
-      await this.putObject(config, dest, source, target, flags)
+      await this.putObject(dest, source, target, flags)
     } else {
       if (target === null) {
 	// target が存在しない場合はコピーできない
@@ -80,7 +81,7 @@ export default class Put extends Command {
 
       // dest 配下にsources をコピー
       await Promise.all(
-	sources.map((src) => this.putObject(config, dest, src, src.name, flags))
+	sources.map((src) => this.putObject(dest, src, src.name, flags))
       )
     }
   }
@@ -113,7 +114,7 @@ export default class Put extends Command {
     return srcDescs
   }
 
-  private async putObject(config: Config, dest: string, source: SourceDesc, target: KeClient.ObjectResponse | string, options: PutOptions) {
+  private async putObject(dest: string, source: SourceDesc, target: KeClient.ObjectResponse | string, options: PutOptions) {
     let destDir = null
     if (target instanceof Object) {
       if (target.type_object === DIRECTORY_TYPE && source.type === 'dir') {
@@ -128,7 +129,7 @@ export default class Put extends Command {
 	      text,
 	    }
 	  }
-	  const result = await KeClient.update(config, target.abspath, data)
+	  const result = await KeClient.update(this.conf, target.abspath, data)
 	  if (options.verbose) {
 	    this.log(`updated text: ${result.abspath}`)
 	  }
@@ -142,7 +143,7 @@ export default class Put extends Command {
 	'name': target as string,
 	'type_object': DIRECTORY_TYPE,
       }
-      const result = await KeClient.create(config, dest, data)
+      const result = await KeClient.create(this.conf, dest, data)
       if (options.verbose) {
 	this.log(`created directory: ${result.abspath}`)
       }
@@ -159,7 +160,7 @@ export default class Put extends Command {
 	'name': target as string,
 	'type_object': TEXT_TYPE,
       }
-      const result = await KeClient.create(config, dest, data)
+      const result = await KeClient.create(this.conf, dest, data)
       if (options.verbose) {
 	this.log(`created text: ${result.abspath}`)
       }
@@ -174,8 +175,8 @@ export default class Put extends Command {
 
       await Promise.all(
 	sources.map(async (src) => {
-	  target = await KeClient.get(config, path.join(destDir, src.name)) || src.name
-	  await this.putObject(config, destDir, src, target, options)
+	  target = await KeClient.get(this.conf, path.join(destDir, src.name)) || src.name
+	  await this.putObject(destDir, src, target, options)
 	})
       )
     }

@@ -38,29 +38,31 @@ export default class Mkdir extends Command {
 
   static strict = false
 
+  private conf!: Config
+
   public async run(): Promise<void> {
     const {argv, flags} = await this.parse(Mkdir)
-    const config = new Config(flags)
+    this.conf = new Config(flags)
     checkInsecure(flags.insecure)
-    const cwd = await checkCwd(config, flags.cwd)
+    const cwd = await checkCwd(this.conf, flags.cwd)
     await Promise.all(
       argv.map((arg) => {
 	const {base, dir} = path.parse(path.resolve(cwd, arg as string))
-	return this.makeDir(config, dir, base, flags)
+	return this.makeDir(dir, base, flags)
       })
     )
   }
 
-  private async makeDir(config: Config, parentDir: string, name: string, options: MkdirOptions) {
+  private async makeDir(parentDir: string, name: string, options: MkdirOptions) {
     // parentDir の存在チェック
-    let result = await KeClient.get(config, parentDir)
+    let result = await KeClient.get(this.conf, parentDir)
     if (result === null) {
       if (!options.parent) {
         throw new Error(`cannot create directory: parent directory '${parentDir}' is not found`)
       }
 
       const {base, dir} = path.parse(parentDir)
-      result = await this.makeDir(config, dir, base, options)
+      result = await this.makeDir(dir, base, options)
     }
 
     if (result!.type_object !== DIRECTORY_TYPE) {
@@ -71,7 +73,7 @@ export default class Mkdir extends Command {
       name,
       'type_object': DIRECTORY_TYPE,
     }
-    result = await KeClient.create(config, parentDir, data)
+    result = await KeClient.create(this.conf, parentDir, data)
     if (result && options.verbose) {
       this.log(`created directory: ${result.abspath}`)
     }

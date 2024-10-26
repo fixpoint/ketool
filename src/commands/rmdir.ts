@@ -38,20 +38,22 @@ export default class Rmdir extends Command {
 
   static strict = false
 
+  private conf!: Config
+
   public async run(): Promise<void> {
     const {argv, flags} = await this.parse(Rmdir)
-    const config = new Config(flags)
+    this.conf = new Config(flags)
     checkInsecure(flags.insecure)
-    const cwd = await checkCwd(config, flags.cwd)
+    const cwd = await checkCwd(this.conf, flags.cwd)
 
     await Promise.all(
-      argv.map((arg) => this.removeDirectory(config, cwd, arg as string, flags))
+      argv.map((arg) => this.removeDirectory(cwd, arg as string, flags))
     )
   }
 
-  private async removeDirectory(config: Config, cwd: string, target: string, options: RmdirOptions) {
+  private async removeDirectory(cwd: string, target: string, options: RmdirOptions) {
     const targetDir = path.resolve(cwd, target)
-    const result = await KeClient.get(config, targetDir)
+    const result = await KeClient.get(this.conf, targetDir)
 
     if (result === null) {
       throw new Error(`failed to remove directory: '${targetDir}' is not found`)
@@ -62,12 +64,12 @@ export default class Rmdir extends Command {
     }
 
     // ディレクトリが空かどうかチェックする
-    const results = await KeClient.getAll(config, `${targetDir}.children`)
+    const results = await KeClient.getAll(this.conf, `${targetDir}.children`)
     if (results!.count > 0) {
       throw new Error(`failed to remove directory: '${targetDir}' is not empty`)      
     }
 
-    await KeClient.del(config, targetDir)
+    await KeClient.del(this.conf, targetDir)
     if (options.verbose) {
       this.log(`removed directory: ${targetDir}`)
     }
@@ -75,7 +77,7 @@ export default class Rmdir extends Command {
     if (options.parent) {
       const {dir} = path.parse(targetDir)
       if (dir !== cwd) {
-	await this.removeDirectory(config, cwd, dir, options)
+	await this.removeDirectory(cwd, dir, options)
       }
     }
 
