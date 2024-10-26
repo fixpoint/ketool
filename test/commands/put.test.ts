@@ -19,4 +19,9 @@ describe('put', () => {
     const {stdout} = await runCommand('put --help')
     expect(stdout).to.contain('USAGE')
   })
+
+  it('runs put ./test/data/test.txt --cwd /root/testdir -kv', async () => {
+    const {stdout} = await runCommand('put ./test/data/test.txt --cwd /root/testdir -kv')
+    expect(stdout).to.contain('created text: /root/testdir/test')
+  })
 })

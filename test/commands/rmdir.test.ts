@@ -19,4 +19,10 @@ describe('rmdir', () => {
     const {stdout} = await runCommand('rmdir --help')
     expect(stdout).to.contain('USAGE')
   })
+
+  it('runs rmdir somedir --cwd /root/testdir -k', async () => {
+    await runCommand('mkdir somedir --cwd /root/testdir -kv')
+    const {stdout} = await runCommand('rmdir somedir --cwd /root/testdir -kv')
+    expect(stdout).to.contain('removed directory: /root/testdir/somedir')
+  })
 })
