@@ -29,61 +29,11 @@ USAGE
 <!-- usagestop -->
 # Commands
 <!-- commands -->
-* [`ketool hello PERSON`](#ketool-hello-person)
-* [`ketool hello world`](#ketool-hello-world)
 * [`ketool help [COMMAND]`](#ketool-help-command)
-* [`ketool plugins`](#ketool-plugins)
-* [`ketool plugins add PLUGIN`](#ketool-plugins-add-plugin)
-* [`ketool plugins:inspect PLUGIN...`](#ketool-pluginsinspect-plugin)
-* [`ketool plugins install PLUGIN`](#ketool-plugins-install-plugin)
-* [`ketool plugins link PATH`](#ketool-plugins-link-path)
-* [`ketool plugins remove [PLUGIN]`](#ketool-plugins-remove-plugin)
-* [`ketool plugins reset`](#ketool-plugins-reset)
-* [`ketool plugins uninstall [PLUGIN]`](#ketool-plugins-uninstall-plugin)
-* [`ketool plugins unlink [PLUGIN]`](#ketool-plugins-unlink-plugin)
-* [`ketool plugins update`](#ketool-plugins-update)
-
-## `ketool hello PERSON`
-
-Say hello
-
-```
-USAGE
-  $ ketool hello PERSON -f <value>
-
-ARGUMENTS
-  PERSON  Person to say hello to
-
-FLAGS
-  -f, --from=<value>  (required) Who is saying hello
-
-DESCRIPTION
-  Say hello
-
-EXAMPLES
-  $ ketool hello friend --from oclif
-  hello friend from oclif! (./src/commands/hello/index.ts)
-```
-
-_See code: [src/commands/hello/index.ts](https://github.com/fixpoint/ketool/blob/v0.0.0/src/commands/hello/index.ts)_
-
-## `ketool hello world`
-
-Say hello world
-
-```
-USAGE
-  $ ketool hello world
-
-DESCRIPTION
-  Say hello world
-
-EXAMPLES
-  $ ketool hello world
-  hello world! (./src/commands/hello/world.ts)
-```
-
-_See code: [src/commands/hello/world.ts](https://github.com/fixpoint/ketool/blob/v0.0.0/src/commands/hello/world.ts)_
+* [`ketool mkdir DIRECTORY`](#ketool-mkdir-directory)
+* [`ketool put SOURCE`](#ketool-put-source)
+* [`ketool rm OBJECT`](#ketool-rm-object)
+* [`ketool rmdir DIRECTORY`](#ketool-rmdir-directory)
 
 ## `ketool help [COMMAND]`
 
@@ -105,293 +55,118 @@ DESCRIPTION
 
 _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v6.2.15/src/commands/help.ts)_
 
-## `ketool plugins`
+## `ketool mkdir DIRECTORY`
 
-List installed plugins.
-
-```
-USAGE
-  $ ketool plugins [--json] [--core]
-
-FLAGS
-  --core  Show core plugins.
-
-GLOBAL FLAGS
-  --json  Format output as json.
-
-DESCRIPTION
-  List installed plugins.
-
-EXAMPLES
-  $ ketool plugins
-```
-
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.4.15/src/commands/plugins/index.ts)_
-
-## `ketool plugins add PLUGIN`
-
-Installs a plugin into ketool.
+Create the directories, if they do not already exist.
 
 ```
 USAGE
-  $ ketool plugins add PLUGIN... [--json] [-f] [-h] [-s | -v]
+  $ ketool mkdir DIRECTORY... [-u <value>] [-t <value>] [-k] [-c <value>] [-p] [-v]
 
 ARGUMENTS
-  PLUGIN...  Plugin to install.
+  DIRECTORY...  path of the directory to be created
 
 FLAGS
-  -f, --force    Force npm to fetch remote resources even if a local copy exists on disk.
-  -h, --help     Show CLI help.
-  -s, --silent   Silences npm output.
-  -v, --verbose  Show verbose npm output.
-
-GLOBAL FLAGS
-  --json  Format output as json.
+  -c, --cwd=<value>      set current working directory to VALUE
+  -k, --insecure         allow insecure SSL connection
+  -p, --parent           no error if existing, make parent directories as needed
+  -t, --token=<value>    API access token of the Kompira Enterprise server
+  -u, --baseurl=<value>  base URL of the Kompira Enterprise server
+  -v, --verbose          print a message for each created directory
 
 DESCRIPTION
-  Installs a plugin into ketool.
-
-  Uses npm to install plugins.
-
-  Installation of a user-installed plugin will override a core plugin.
-
-  Use the KETOOL_NPM_LOG_LEVEL environment variable to set the npm loglevel.
-  Use the KETOOL_NPM_REGISTRY environment variable to set the npm registry.
-
-ALIASES
-  $ ketool plugins add
+  Create the directories, if they do not already exist.
 
 EXAMPLES
-  Install a plugin from npm registry.
-
-    $ ketool plugins add myplugin
-
-  Install a plugin from a github url.
-
-    $ ketool plugins add https://github.com/someuser/someplugin
-
-  Install a plugin from a github slug.
-
-    $ ketool plugins add someuser/someplugin
+  $ ketool mkdir
 ```
 
-## `ketool plugins:inspect PLUGIN...`
+_See code: [src/commands/mkdir.ts](https://github.com/fixpoint/ketool/blob/v0.0.0/src/commands/mkdir.ts)_
 
-Displays installation properties of a plugin.
+## `ketool put SOURCE`
+
+put files or directories to Kompira server
 
 ```
 USAGE
-  $ ketool plugins inspect PLUGIN...
+  $ ketool put SOURCE... [-u <value>] [-t <value>] [-k] [-d <value>] [-c <value>] [-r] [-o] [-v]
 
 ARGUMENTS
-  PLUGIN...  [default: .] Plugin to inspect.
+  SOURCE...  source file or directory
 
 FLAGS
-  -h, --help     Show CLI help.
-  -v, --verbose
-
-GLOBAL FLAGS
-  --json  Format output as json.
+  -c, --cwd=<value>      set current working directory to VALUE
+  -d, --dest=<value>     specify destination object or directory (create if none exists)
+  -k, --insecure         allow insecure SSL connection
+  -o, --overwrite        overwrite an existing object
+  -r, --recursive        put directories recursively
+  -t, --token=<value>    API access token of the Kompira Enterprise server
+  -u, --baseurl=<value>  base URL of the Kompira Enterprise server
+  -v, --verbose          explain what is being down
 
 DESCRIPTION
-  Displays installation properties of a plugin.
+  put files or directories to Kompira server
 
 EXAMPLES
-  $ ketool plugins inspect myplugin
+  $ ketool put
 ```
 
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.4.15/src/commands/plugins/inspect.ts)_
+_See code: [src/commands/put.ts](https://github.com/fixpoint/ketool/blob/v0.0.0/src/commands/put.ts)_
 
-## `ketool plugins install PLUGIN`
+## `ketool rm OBJECT`
 
-Installs a plugin into ketool.
+Remove the directories, if they are empty.
 
 ```
 USAGE
-  $ ketool plugins install PLUGIN... [--json] [-f] [-h] [-s | -v]
+  $ ketool rm OBJECT... [-u <value>] [-t <value>] [-k] [-c <value>] [-f] [-r] [-v]
 
 ARGUMENTS
-  PLUGIN...  Plugin to install.
+  OBJECT...  path of the object to be removed
 
 FLAGS
-  -f, --force    Force npm to fetch remote resources even if a local copy exists on disk.
-  -h, --help     Show CLI help.
-  -s, --silent   Silences npm output.
-  -v, --verbose  Show verbose npm output.
-
-GLOBAL FLAGS
-  --json  Format output as json.
+  -c, --cwd=<value>      set current working directory to VALUE
+  -f, --force            ignore nonexistent objects and arguments
+  -k, --insecure         allow insecure SSL connection
+  -r, --recurcive        remove directories and their contents recursively
+  -t, --token=<value>    API access token of the Kompira Enterprise server
+  -u, --baseurl=<value>  base URL of the Kompira Enterprise server
+  -v, --verbose          print a message for each removed directory
 
 DESCRIPTION
-  Installs a plugin into ketool.
-
-  Uses npm to install plugins.
-
-  Installation of a user-installed plugin will override a core plugin.
-
-  Use the KETOOL_NPM_LOG_LEVEL environment variable to set the npm loglevel.
-  Use the KETOOL_NPM_REGISTRY environment variable to set the npm registry.
-
-ALIASES
-  $ ketool plugins add
+  Remove the directories, if they are empty.
 
 EXAMPLES
-  Install a plugin from npm registry.
-
-    $ ketool plugins install myplugin
-
-  Install a plugin from a github url.
-
-    $ ketool plugins install https://github.com/someuser/someplugin
-
-  Install a plugin from a github slug.
-
-    $ ketool plugins install someuser/someplugin
+  $ ketool rm
 ```
 
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.4.15/src/commands/plugins/install.ts)_
+_See code: [src/commands/rm.ts](https://github.com/fixpoint/ketool/blob/v0.0.0/src/commands/rm.ts)_
 
-## `ketool plugins link PATH`
+## `ketool rmdir DIRECTORY`
 
-Links a plugin into the CLI for development.
+Remove the directories, if they are empty.
 
 ```
 USAGE
-  $ ketool plugins link PATH [-h] [--install] [-v]
+  $ ketool rmdir DIRECTORY... [-u <value>] [-t <value>] [-k] [-c <value>] [-p] [-v]
 
 ARGUMENTS
-  PATH  [default: .] path to plugin
+  DIRECTORY...  path of the directory to be removed
 
 FLAGS
-  -h, --help          Show CLI help.
-  -v, --verbose
-      --[no-]install  Install dependencies after linking the plugin.
+  -c, --cwd=<value>      set current working directory to VALUE
+  -k, --insecure         allow insecure SSL connection
+  -p, --parent           remove DIRECTORY and its ancestors
+  -t, --token=<value>    API access token of the Kompira Enterprise server
+  -u, --baseurl=<value>  base URL of the Kompira Enterprise server
+  -v, --verbose          print a message for each removed directory
 
 DESCRIPTION
-  Links a plugin into the CLI for development.
-
-  Installation of a linked plugin will override a user-installed or core plugin.
-
-  e.g. If you have a user-installed or core plugin that has a 'hello' command, installing a linked plugin with a 'hello'
-  command will override the user-installed or core plugin implementation. This is useful for development work.
-
+  Remove the directories, if they are empty.
 
 EXAMPLES
-  $ ketool plugins link myplugin
+  $ ketool rmdir
 ```
 
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.4.15/src/commands/plugins/link.ts)_
-
-## `ketool plugins remove [PLUGIN]`
-
-Removes a plugin from the CLI.
-
-```
-USAGE
-  $ ketool plugins remove [PLUGIN...] [-h] [-v]
-
-ARGUMENTS
-  PLUGIN...  plugin to uninstall
-
-FLAGS
-  -h, --help     Show CLI help.
-  -v, --verbose
-
-DESCRIPTION
-  Removes a plugin from the CLI.
-
-ALIASES
-  $ ketool plugins unlink
-  $ ketool plugins remove
-
-EXAMPLES
-  $ ketool plugins remove myplugin
-```
-
-## `ketool plugins reset`
-
-Remove all user-installed and linked plugins.
-
-```
-USAGE
-  $ ketool plugins reset [--hard] [--reinstall]
-
-FLAGS
-  --hard       Delete node_modules and package manager related files in addition to uninstalling plugins.
-  --reinstall  Reinstall all plugins after uninstalling.
-```
-
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.4.15/src/commands/plugins/reset.ts)_
-
-## `ketool plugins uninstall [PLUGIN]`
-
-Removes a plugin from the CLI.
-
-```
-USAGE
-  $ ketool plugins uninstall [PLUGIN...] [-h] [-v]
-
-ARGUMENTS
-  PLUGIN...  plugin to uninstall
-
-FLAGS
-  -h, --help     Show CLI help.
-  -v, --verbose
-
-DESCRIPTION
-  Removes a plugin from the CLI.
-
-ALIASES
-  $ ketool plugins unlink
-  $ ketool plugins remove
-
-EXAMPLES
-  $ ketool plugins uninstall myplugin
-```
-
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.4.15/src/commands/plugins/uninstall.ts)_
-
-## `ketool plugins unlink [PLUGIN]`
-
-Removes a plugin from the CLI.
-
-```
-USAGE
-  $ ketool plugins unlink [PLUGIN...] [-h] [-v]
-
-ARGUMENTS
-  PLUGIN...  plugin to uninstall
-
-FLAGS
-  -h, --help     Show CLI help.
-  -v, --verbose
-
-DESCRIPTION
-  Removes a plugin from the CLI.
-
-ALIASES
-  $ ketool plugins unlink
-  $ ketool plugins remove
-
-EXAMPLES
-  $ ketool plugins unlink myplugin
-```
-
-## `ketool plugins update`
-
-Update installed plugins.
-
-```
-USAGE
-  $ ketool plugins update [-h] [-v]
-
-FLAGS
-  -h, --help     Show CLI help.
-  -v, --verbose
-
-DESCRIPTION
-  Update installed plugins.
-```
-
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.4.15/src/commands/plugins/update.ts)_
+_See code: [src/commands/rmdir.ts](https://github.com/fixpoint/ketool/blob/v0.0.0/src/commands/rmdir.ts)_
 <!-- commandsstop -->
