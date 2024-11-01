@@ -22,6 +22,11 @@ describe('put', () => {
 
   it('runs put ./test/data/test.txt --cwd /root/testdir -kv', async () => {
     const {stdout} = await runCommand('put ./test/data/test.txt --cwd /root/testdir -kv')
-    expect(stdout).to.contain('created text: /root/testdir/test')
+    expect(stdout).to.contain('created object (/system/types/Text): /root/testdir/test')
+  })
+
+  it('runs put ./test/data/logo.png --cwd /root/testdir -kv', async () => {
+    const {stdout} = await runCommand('put ./test/data/logo.png --cwd /root/testdir -kv')
+    expect(stdout).to.contain('created object (/system/types/Binary): /root/testdir/logo')
   })
 })

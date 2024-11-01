@@ -20,7 +20,7 @@ $ npm install -g ketool
 $ ketool COMMAND
 running command...
 $ ketool (--version)
-ketool/0.0.0 linux-x64 node-v20.18.0
+ketool/0.1.1 linux-x64 node-v20.18.0
 $ ketool --help [COMMAND]
 USAGE
   $ ketool COMMAND
@@ -61,7 +61,7 @@ Create the directories, if they do not already exist.
 
 ```
 USAGE
-  $ ketool mkdir DIRECTORY... [-u <value>] [-t <value>] [-k] [-c <value>] [-p] [-v]
+  $ ketool mkdir DIRECTORY... [-u <value>] [-k] [-t <value>] [-c <value>] [-p] [-v]
 
 ARGUMENTS
   DIRECTORY...  path of the directory to be created
@@ -81,7 +81,7 @@ EXAMPLES
   $ ketool mkdir
 ```
 
-_See code: [src/commands/mkdir.ts](https://github.com/fixpoint/ketool/blob/v0.0.0/src/commands/mkdir.ts)_
+_See code: [src/commands/mkdir.ts](https://github.com/fixpoint/ketool/blob/v0.1.1/src/commands/mkdir.ts)_
 
 ## `ketool put SOURCE`
 
@@ -89,7 +89,7 @@ put files or directories to Kompira server
 
 ```
 USAGE
-  $ ketool put SOURCE... [-u <value>] [-t <value>] [-k] [-d <value>] [-c <value>] [-r] [-o] [-v]
+  $ ketool put SOURCE... [-u <value>] [-k] [-t <value>] [-c <value>] [-d <value>] [-o] [-r] [-v]
 
 ARGUMENTS
   SOURCE...  source file or directory
@@ -111,7 +111,7 @@ EXAMPLES
   $ ketool put
 ```
 
-_See code: [src/commands/put.ts](https://github.com/fixpoint/ketool/blob/v0.0.0/src/commands/put.ts)_
+_See code: [src/commands/put.ts](https://github.com/fixpoint/ketool/blob/v0.1.1/src/commands/put.ts)_
 
 ## `ketool rm OBJECT`
 
@@ -119,7 +119,7 @@ Remove the directories, if they are empty.
 
 ```
 USAGE
-  $ ketool rm OBJECT... [-u <value>] [-t <value>] [-k] [-c <value>] [-f] [-r] [-v]
+  $ ketool rm OBJECT... [-u <value>] [-k] [-t <value>] [-c <value>] [-f] [-r] [-v]
 
 ARGUMENTS
   OBJECT...  path of the object to be removed
@@ -140,7 +140,7 @@ EXAMPLES
   $ ketool rm
 ```
 
-_See code: [src/commands/rm.ts](https://github.com/fixpoint/ketool/blob/v0.0.0/src/commands/rm.ts)_
+_See code: [src/commands/rm.ts](https://github.com/fixpoint/ketool/blob/v0.1.1/src/commands/rm.ts)_
 
 ## `ketool rmdir DIRECTORY`
 
@@ -148,7 +148,7 @@ Remove the directories, if they are empty.
 
 ```
 USAGE
-  $ ketool rmdir DIRECTORY... [-u <value>] [-t <value>] [-k] [-c <value>] [-p] [-v]
+  $ ketool rmdir DIRECTORY... [-u <value>] [-k] [-t <value>] [-c <value>] [-p] [-v]
 
 ARGUMENTS
   DIRECTORY...  path of the directory to be removed
@@ -168,5 +168,5 @@ EXAMPLES
   $ ketool rmdir
 ```
 
-_See code: [src/commands/rmdir.ts](https://github.com/fixpoint/ketool/blob/v0.0.0/src/commands/rmdir.ts)_
+_See code: [src/commands/rmdir.ts](https://github.com/fixpoint/ketool/blob/v0.1.1/src/commands/rmdir.ts)_
 <!-- commandsstop -->
