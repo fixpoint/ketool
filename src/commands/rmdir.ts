@@ -66,7 +66,7 @@ export default class Rmdir extends Command {
     }
 
     // ディレクトリが空かどうかチェックする
-    const results = await KeClient.getAll(this.conf, `${targetDir}.children`)
+    const results = await KeClient.getChildren(this.conf, targetDir)
     if (results!.count > 0) {
       this.warn(`failed to remove directory: '${targetDir}' is not empty`)
       return
