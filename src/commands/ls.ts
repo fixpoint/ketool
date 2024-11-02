@@ -4,7 +4,7 @@ import path from 'node:path'
 import * as KeClient from '../client.js'
 import {checkCwd, checkInsecure} from '../common.js'
 import Config from '../config.js'
-import {DIRECTORY_TYPE} from '../const.js'
+import {DIRECTORY_TYPE, TABLE_TYPE} from '../const.js'
 import {common as commonFlags} from '../flags.js'
 
 
@@ -50,11 +50,14 @@ export default class Ls extends Command {
   }
 
   private _printObj(target: KeClient.ObjectResponse, indent: string, longFormat?: boolean) {
+    if (!target.abspath) {
+      return
+    }
+
+    const {name} = path.parse(target.abspath)
     if (longFormat) {
-      const {name} = path.parse(target.abspath)
       this.log(`${indent}${target.owner} ${target.updated} ${name}:${target.type_object}`)
     } else {
-      const {name} = path.parse(target.abspath)
       this.log(`${indent}${name}`)
     }
   }
@@ -66,7 +69,7 @@ export default class Ls extends Command {
       return false
     }
 
-    if (target.type_object === DIRECTORY_TYPE) {
+    if ([DIRECTORY_TYPE, TABLE_TYPE].includes(target.type_object)) {
       const resp = await KeClient.getChildren(this.conf, targetPath)
       let indent = ''
       if (withHeader) {
