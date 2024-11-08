@@ -12,7 +12,7 @@ export default class Config {
   baseurl?: string
   token?: string
 
-  constructor(flags: ConfigOptions) {
+  constructor(flags: ConfigOptions = {}) {
     const config = require('config')
 
     this.baseurl = flags.baseurl || config.get('baseurl')

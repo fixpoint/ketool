@@ -1,13 +1,13 @@
 import {Args, Command, Flags} from '@oclif/core'
+import {isText} from 'istextorbinary'
 import {lookup as mimeLookup} from 'mime-types'
-import assert from 'node:assert'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 
 import * as KeClient from '../client.js'
 import {checkCwd, checkInsecure} from '../common.js'
 import Config from '../config.js'
-import {DIRECTORY_TYPE, TEXT_TYPE} from '../const.js'
+import {BIN_TYPE, DIRECTORY_TYPE, TEXT_TYPE} from '../const.js'
 import {common as commonFlags} from '../flags.js'
 
 
@@ -55,139 +55,141 @@ export default class Put extends Command {
     this.conf = new Config(flags)
     checkInsecure(flags.insecure)
     const cwd = await checkCwd(this.conf, flags.cwd)
-    let dest = path.normalize(path.join(cwd, flags.dest || ''))
-    const sources = await this.checkSources(argv as string[], path.resolve('.'))
+    const destPath = path.resolve(cwd, flags.dest || '')
+    const sources = await this._checkSources(argv as string[], path.resolve('.'), flags.recursive)
+    let result = false
+    if (argv.length > 1) {
+      const destObj = await KeClient.get(this.conf, destPath)
+      if (destObj === null || destObj.type_object !== DIRECTORY_TYPE) {
+        // source が複数で destObj が存在しない場合はコピーできない
+        this.error(`failed to put '${destPath}': no such object or directory`)
+      }
 
-    if (sources.length === 0) {
-      return
+      // destObj/ 配下にsources をコピー
+      result = (await Promise.all(
+        sources.map(async (src) => this.putObj(src, destObj, src.name, flags))
+      )).every(Boolean)
+    } else if (sources.length === 1) {  // argv.length === 1
+      const source = sources[0]
+      const destObj = await KeClient.get(this.conf, destPath)
+      if (destObj && destObj.type_object === DIRECTORY_TYPE) {
+        result = await this.putObj(source, destObj, source.name, flags)
+      } else {
+        // destObj が存在しないか、ディレクトリ以外の場合、親ディレクトリが存在するかチェック
+        const {dir, name} = path.parse(destPath)
+        const parentDir = await KeClient.get(this.conf, dir)
+        if (parentDir === null || parentDir.type_object !== DIRECTORY_TYPE) {
+          this.error(`failed to put '${destPath}': no such object or directory`)
+        }
+
+        result = await this.putObj(source, parentDir, name, flags)
+      }
     }
 
-    let target: KeClient.ObjectResponse | null | string = await KeClient.get(this.conf, dest) 
-  
-    if (argv.length === 1) {
-      const source = sources[0]
-      if (!target) {
-	({base: target, dir: dest} = path.parse(dest))
-      } else if (target.type_object === DIRECTORY_TYPE) {
-	target = await KeClient.get(this.conf, path.join(target.abspath, source.name)) || source.name
-      } else {
-	dest = path.dirname(dest)
-      }
-
-      await this.putObject(dest, source, target, flags)
-    } else {
-      if (target === null) {
-	// target が存在しない場合はコピーできない
-	throw new Error(`target '${dest}' is not found`)
-      } else if (target!.type_object !== DIRECTORY_TYPE) {
-	// コピー先がディレクトリ以外の場合はコピーできない
-	throw new Error(`target '${dest}' is not a directory`)
-      }
-
-      // dest 配下にsources をコピー
-      await Promise.all(
-	sources.map(async (src) => {
-	  const target = await KeClient.get(this.conf, path.join(dest, src.name)) || src.name
-	  await this.putObject(dest, src, target, flags)
-	})
-      )
+    if (!result || sources.length !== argv.length) {
+      this.exit(1)
     }
   }
 
-  private async checkSources(sources: string[], cwd: string): Promise<SourceDesc[]> {
-    const srcDescs: SourceDesc[] = []
+  private async _checkSources(sources: string[], cwd: string, recursive: boolean): Promise<SourceDesc[]> {
+    const results: SourceDesc[] = []
     await Promise.all(
       sources.map(async (src) => {
-	const source = path.normalize(path.join(cwd, src))
-	try {
-	  const stat = await fs.stat(source)
-	  const {ext, name} = path.parse(source)
-	  if (stat.isDirectory()) {
-	    srcDescs.push({ext, name, path: source, type: 'dir'})
-	  } else if (stat.isFile()) {
-	    srcDescs.push({ext, name, path: source, type: 'file'})
-	  } else {
-	    this.log(`put: invalid source '${source} type: should be file or directory`)
-	  }
-	} catch (error) {
-	  if (error instanceof Error) {
-	    this.log(`put: cannot stat '${source}': ${error.message}`)
-	  } else {
-	    this.log(`put: cannot stat '${source}': Unknown error`)
-	  }
-	}
+        const source = path.resolve(cwd, src)
+        try {
+          const stat = await fs.stat(source)
+          const {ext, name} = path.parse(source)
+          if (stat.isDirectory()) {
+            if (recursive) {
+              results.push({ext, name, path: source, type: 'dir'})
+            } else {
+              this.warn(`put: -r not specified; omitting directory '${source}'`)
+            }
+          } else if (stat.isFile()) {
+            results.push({ext, name, path: source, type: 'file'})
+          } else {
+            this.warn(`put: invalid source '${source}': should be file or directory`)
+          }
+        } catch (error) {
+          if (error instanceof Error) {
+            this.warn(`put: cannot stat '${source}': ${error.message}`)
+          }
+        }
       })
     )
 
-    return srcDescs
+    return results
   }
 
-  private async putObject(dest: string, source: SourceDesc, target: KeClient.ObjectResponse | string, options: PutOptions) {
-    let destDir = null
-
-    if (target instanceof Object) {
-      if (target.type_object === DIRECTORY_TYPE && source.type === 'dir') {
-	destDir = target.abspath
-      } else if (target.type_object === TEXT_TYPE && source.type === 'file') {
-	if (options.overwrite) {
-	  const text = await fs.readFile(source.path, { encoding: 'utf8' })
-	  const data = {
-	    'fields': {
-	      'contentType': mimeLookup(source.path),
-	      'ext': source.ext.replace(/^\.+/, ''),
-	      text,
-	    }
-	  }
-	  const result = await KeClient.update(this.conf, target.abspath, data)
-	  if (options.verbose) {
-	    this.log(`updated text: ${result.abspath}`)
-	  }
-	}
-      } else {
-	this.log(`put: cannot overwrite ${target.abspath}: type '${target.type_object}' mismatch`)
-	return
-      }
-    } else if (source.type === 'dir') {
-      const data = {
-	'name': target as string,
-	'type_object': DIRECTORY_TYPE,
-      }
-      const result = await KeClient.create(this.conf, dest, data)
-      if (options.verbose) {
-	this.log(`created directory: ${result.abspath}`)
-      }
-
-      destDir = result.abspath
-    } else if (source.type === 'file') {
-      const text = await fs.readFile(source.path, { encoding: 'utf8' })
-      const data = {
-	'fields': {
-	  'contentType': mimeLookup(source.path),
-	  'ext': source.ext.replace(/^\.+/, ''),
-	  text,
-	},
-	'name': target as string,
-	'type_object': TEXT_TYPE,
-      }
-      const result = await KeClient.create(this.conf, dest, data)
-      if (options.verbose) {
-	this.log(`created text: ${result.abspath}`)
-      }
-    } else {
-      assert(false, `invalid source.type: ${source.type}`)
+  private async _createObj(source: SourceDesc, destDirObj: KeClient.ObjectResponse, name: string, verbose?: boolean) {
+    const {fields, typeObject} = source.type === 'file' ? await this._loadSourceFile(source.path, source.ext) : {fields: {}, typeObject: DIRECTORY_TYPE}
+    const result = await KeClient.create(this.conf, destDirObj.abspath, {fields, name, 'type_object': typeObject})
+    if (verbose) {
+      this.log(`created object (${result.type_object}): ${result.abspath}`)
     }
 
-    if (options.recursive && destDir) {
+    return result
+  }
+
+  private async _loadSourceFile(srcPath: string, ext: string) {
+    const dataFields = {
+      contentType: mimeLookup(srcPath),
+      ext: ext.replace(/^\.+/, ''),
+    }
+    const buf = await fs.readFile(srcPath)
+    return isText(srcPath, buf) ? {
+      fields: {...dataFields, text: buf.toString('utf8')},
+      typeObject: TEXT_TYPE
+    } : {
+      fields: {...dataFields, data: buf.toString('base64')},
+      typeObject: BIN_TYPE
+    }
+  }
+
+  private async _updateObj(source: SourceDesc, destObj: KeClient.ObjectResponse, verbose?: boolean) {
+    const {fields, typeObject} = source.type === 'dir' ? {fields: {}, typeObject: DIRECTORY_TYPE} : await this._loadSourceFile(source.path, source.ext)
+    if (typeObject !== destObj.type_object) {
+      this.warn(`put: cannot overwrite ${destObj.abspath}: type '${destObj.type_object}' mismatch`)
+      return false
+    }
+
+    await KeClient.update(this.conf, destObj.abspath, {fields})
+    if (verbose) {
+      this.log(`updated object (${destObj.type_object}): ${destObj.abspath}`)
+    }
+
+    return true
+  }
+
+  private async putObj(source: SourceDesc, destDir: KeClient.ObjectResponse, name: string, options: PutOptions): Promise<boolean> {
+    //
+    // putObj:
+    //    source からファイルやディレクトリを読み込み、dest 配下/に target オブジェクトとして配置する
+    //
+    // [parameters]
+    //  - source: オブジェクトのデータソース
+    //  - destDir: オブジェクトを配置する先のディレクトリオブジェクト
+    //  - name: 新規作成時のオブジェクト名称
+    //  - options: Putオプション
+    //
+    let result = true
+    let destObj = await KeClient.get(this.conf, path.join(destDir.abspath, name))
+    if (destObj === null) {
+      destObj = await this._createObj(source, destDir, name, options.verbose)
+    } else if (destObj && options.overwrite) {
+      result = await this._updateObj(source, destObj, options.verbose)
+    }
+
+    if (options.recursive && destObj.type_object === DIRECTORY_TYPE) {
       // ファイル一覧を取得
       const dirs = await fs.readdir(source.path)
-      const sources = await this.checkSources(dirs, source.path)
+      const sources = await this._checkSources(dirs, source.path, true)
 
-      await Promise.all(
-	sources.map(async (src) => {
-	  const target = await KeClient.get(this.conf, path.join(destDir, src.name)) || src.name
-	  await this.putObject(destDir, src, target, options)
-	})
-      )
+      return (await Promise.all(
+        sources.map(async (src) => this.putObj(src, destObj, src.name, options))
+      )).every(Boolean) && result
     }
+
+    return result
   }
 }

@@ -54,9 +54,9 @@ export async function get(config: Config, path: string): Promise<ObjectResponse 
   return resp.result
 }
 
-export async function getAll(config: Config, path: string): Promise<ObjectsResponse | null> {
+export async function getChildren(config: Config, dirPath: string): Promise<ObjectsResponse | null> {
   const rest: rm.RestClient = new rm.RestClient('ke-client', config.baseurl)
-  const resp: rm.IRestResponse<ObjectsResponse> = await rest.get<ObjectsResponse>(path, requestOpts(config.token))
+  const resp: rm.IRestResponse<ObjectsResponse> = await rest.get<ObjectsResponse>(`${dirPath}.children`, requestOpts(config.token))
   if (resp.statusCode === 404) {
     return null
   }

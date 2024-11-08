@@ -58,7 +58,7 @@ export default class Mkdir extends Command {
     let result = await KeClient.get(this.conf, parentDir)
     if (result === null) {
       if (!options.parent) {
-        throw new Error(`cannot create directory: parent directory '${parentDir}' is not found`)
+        this.error(`cannot create directory: parent directory '${parentDir}' is not found`)
       }
 
       const {base, dir} = path.parse(parentDir)
@@ -66,7 +66,7 @@ export default class Mkdir extends Command {
     }
 
     if (result!.type_object !== DIRECTORY_TYPE) {
-      throw new Error(`cannot create directory: parent directory '${parentDir}' is not directory`)
+      this.error(`cannot create directory: parent directory '${parentDir}' is not directory`)
     }
 
     const data = {

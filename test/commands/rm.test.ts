@@ -25,4 +25,16 @@ describe('rm', () => {
     const {stdout} = await runCommand('rm test --cwd /root/testdir -kv')
     expect(stdout).to.contain('removed: /root/testdir/test')
   })
+
+  it('runs rm no_such_obj --cwd /root/testdir', async () => {
+    const {error, stderr} = await runCommand('rm no_such_obj --cwd /root/testdir -k')
+    expect(error?.oclif?.exit).to.equal(1)
+    expect(stderr).to.contain("failed to remove: '/root/testdir/no_such_obj' is not found")
+  })
+
+  it('runs rm testdir --cwd /root', async () => {
+    const {error, stderr} = await runCommand('rm testdir --cwd /root -k')
+    expect(error?.oclif?.exit).to.equal(1)
+    expect(stderr).to.contain("failed to remove: '/root/testdir' is a directory")
+  })
 })

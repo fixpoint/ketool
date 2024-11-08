@@ -25,4 +25,35 @@ describe('rmdir', () => {
     const {stdout} = await runCommand('rmdir somedir --cwd /root/testdir -kv')
     expect(stdout).to.contain('removed directory: /root/testdir/somedir')
   })
+
+  it('runs rmdir foo/bar --cwd /root/testdir -pv', async () => {
+    await runCommand('mkdir foo/bar --cwd /root/testdir -kp')
+    const {stdout} = await runCommand('rmdir foo/bar --cwd /root/testdir -kvp')
+    expect(stdout).to.contain('removed directory: /root/testdir/foo/bar')
+    expect(stdout).to.contain('removed directory: /root/testdir/foo')
+  })
+
+  it('runs rmdir unknown_dir --cwd /root/testdir -k', async () => {
+    const {error, stderr} = await runCommand('rmdir unknown_dir --cwd /root/testdir -kv')
+    expect(error?.oclif?.exit).to.equal(1)
+    expect(stderr).to.contain("failed to remove directory: '/root/testdir/unknown_dir' is not found")
+  })
+
+  it('runs rmdir unknown_dir --cwd /root/testdir -k', async () => {
+    const {error, stderr} = await runCommand('rmdir unknown_dir --cwd /root/testdir -kv')
+    expect(error?.oclif?.exit).to.equal(1)
+    expect(stderr).to.contain("failed to remove directory: '/root/testdir/unknown_dir' is not found")
+  })
+
+  it('runs rmdir info --cwd /system -k', async () => {
+    const {error, stderr} = await runCommand('rmdir info --cwd /system -k')
+    expect(error?.oclif?.exit).to.equal(1)
+    expect(stderr).to.contain("failed to remove directory: '/system/info' is not a directory")
+  })
+
+  it('runs rmdir /root', async () => {
+    const {error, stderr} = await runCommand('rmdir info /root -k')
+    expect(error?.oclif?.exit).to.equal(1)
+    expect(stderr).to.contain("failed to remove directory: '/root' is not empty")
+  })
 })

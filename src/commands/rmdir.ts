@@ -46,9 +46,12 @@ export default class Rmdir extends Command {
     checkInsecure(flags.insecure)
     const cwd = await checkCwd(this.conf, flags.cwd)
 
-    await Promise.all(
+    const results = await Promise.all(
       argv.map((arg) => this.removeDirectory(cwd, arg as string, flags))
     )
+    if (results.includes(null)) {
+      this.exit(1)
+    }
   }
 
   private async removeDirectory(cwd: string, target: string, options: RmdirOptions) {
@@ -57,19 +60,19 @@ export default class Rmdir extends Command {
 
     if (result === null) {
       this.warn(`failed to remove directory: '${targetDir}' is not found`)
-      return
+      return null
     }
 
     if (result.type_object !== DIRECTORY_TYPE) {
       this.warn(`failed to remove directory: '${targetDir}' is not a directory`)
-      return
+      return null
     }
 
     // ディレクトリが空かどうかチェックする
-    const results = await KeClient.getAll(this.conf, `${targetDir}.children`)
+    const results = await KeClient.getChildren(this.conf, targetDir)
     if (results!.count > 0) {
       this.warn(`failed to remove directory: '${targetDir}' is not empty`)
-      return
+      return null
     }
 
     await KeClient.del(this.conf, targetDir)

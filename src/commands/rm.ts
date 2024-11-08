@@ -47,9 +47,12 @@ export default class Rm extends Command {
     this.conf = new Config(flags)
     checkInsecure(flags.insecure)
     const cwd = await checkCwd(this.conf, flags.cwd)
-    await Promise.all(
+    const results = await Promise.all(
       argv.map((arg) => this.removeObject(path.resolve(cwd, arg as string), flags))
     )
+    if (results.includes(false)) {
+      this.exit(1)
+    }
   }
 
   private async removeObject(target: string, options: RmOptions) {
@@ -57,12 +60,12 @@ export default class Rm extends Command {
       const result = await KeClient.get(this.conf, target)
       if (result === null) {
 	this.warn(`failed to remove: '${target}' is not found`)
-	return
+	return false
       }
 
       if (result.type_object === DIRECTORY_TYPE) {
 	this.warn(`failed to remove: '${target}' is a directory`)
-	return
+	return false
       }
     }
 
@@ -70,5 +73,7 @@ export default class Rm extends Command {
     if (options.verbose && removed) {
       this.log(`removed: ${target}`)
     }
+
+    return true
   }
 }

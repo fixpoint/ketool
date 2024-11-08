@@ -1,7 +1,7 @@
 {
   "name": "ketool",
   "description": "Development tools for Kompira Enterprise",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": "Kenta HATTORI",
   "bin": {
     "ketool": "./bin/run.js"
@@ -11,6 +11,7 @@
     "@oclif/core": "^4",
     "@oclif/plugin-help": "^6",
     "config": "^3.3.12",
+    "istextorbinary": "^9.5.0",
     "mime-types": "^2.1.35",
     "typed-rest-client": "^2.1.0"
   },
@@ -19,9 +20,11 @@
     "@oclif/test": "^4",
     "@types/chai": "^4",
     "@types/config": "^3.3.5",
+    "@types/istextorbinary": "^2.3.4",
     "@types/mime-types": "^2.1.4",
     "@types/mocha": "^10",
     "@types/node": "^18",
+    "c8": "^10.1.2",
     "chai": "^4",
     "eslint": "^8",
     "eslint-config-oclif": "^5",
@@ -69,7 +72,7 @@
     "postpack": "shx rm -f oclif.manifest.json",
     "posttest": "npm run lint",
     "prepack": "oclif manifest && oclif readme",
-    "test": "mocha --forbid-only \"test/**/*.test.ts\"",
+    "test": "c8 mocha --forbid-only \"test/**/*.test.ts\"",
     "version": "oclif readme && git add README.md"
   },
   "types": "dist/index.d.ts"
